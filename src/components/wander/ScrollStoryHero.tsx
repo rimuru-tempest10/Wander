@@ -49,15 +49,18 @@ export function ScrollStoryHero() {
     offset: ["start start", "end end"],
   });
 
-  const travelOpacity = useTransform(scrollYProgress, [0, 0.28, 0.38], [1, 1, 0]);
-  const skiOpacity = useTransform(scrollYProgress, [0.28, 0.38, 0.62, 0.72], [0, 1, 1, 0]);
-  const campOpacity = useTransform(scrollYProgress, [0.62, 0.72, 1], [0, 1, 1]);
+  // Single scalar in [0, 2] describing which act we're on; each act's opacity is
+  // derived from the distance to that scalar so exactly one act can be fully
+  // visible at a time (no act 1 / act 3 overlap at the end of the story).
+  const actProgress = useTransform(scrollYProgress, [0.06, 0.94], [0, 2], { clamp: true });
+
+  const travelOpacity = useTransform(actProgress, [0, 1], [1, 0]);
+  const skiOpacity = useTransform(actProgress, [0, 1, 2], [0, 1, 0]);
+  const campOpacity = useTransform(actProgress, [1, 2], [0, 1]);
   const opacities = [travelOpacity, skiOpacity, campOpacity];
 
-  useMotionValueEvent(scrollYProgress, "change", (v) => {
-    const next = v >= 0.67 ? 2 : v >= 0.33 ? 1 : 0;
-    console.log("next", next, "active", active);
-    setActive(next);
+  useMotionValueEvent(actProgress, "change", (v) => {
+    setActive(Math.round(v));
   });
 
   return (
